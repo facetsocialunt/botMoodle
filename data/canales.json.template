@@ -1,0 +1,18 @@
+[
+    {
+      "idForo": 1,
+      "idCanalDiscord": "<ID_CANAL_FORO_1>"
+    },
+    {
+        "idForo": 2,
+        "idCanalDiscord": "<ID_CANAL_FORO_2>"
+    },
+    {
+        "idForo": 3,
+        "idCanalDiscord": "<ID_CANAL_FORO_3>"
+    },
+    {
+        "idForo": 4,
+        "idCanalDiscord": "<ID_CANAL_FORO_4>"
+    }
+]
