@@ -17,12 +17,12 @@ const ServerId = process.env.DISCORD_SERVER_ID;
 // variables globales
 var listadoForos = require('./data/canales.json');
 
-let getPost="mod_forum_get_forum_discussion_posts";
+let getPost = "mod_forum_get_discussion_posts";
 
- //Middleware
- app.use(morgan('dev'));
- app.use(express.urlencoded({extended:false}));
- app.use(express.json());
+//Middleware
+app.use(morgan('dev'));
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 
 app.set('port', process.env.PORT || PuertoEscuchaPlugin);
 
@@ -34,8 +34,8 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 //  wsfunction: funcion de MWS que se desea consultar
 //  parametro: el nombre del parametro que se necesita enviar
 //  valorParametro: el valor del mismo
-async function getMoodleWebServiceFunctionParams(wsfunction, parametro, valorParametro){
-    const response = await axios.get(`${UrlMoodelServer}/webservice/rest/server.php?wstoken=${TokenMoodle}&moodlewsrestformat=json&wsfunction=${wsfunction}&${parametro}=${valorParametro}`, {
+async function getMoodleWebServiceFunctionParams(wsfunction, parametro, valorParametro) {
+    const response = await axios.get(`${UrlMoodelServer}/moodle401/webservice/rest/server.php?wstoken=${TokenMoodle}&moodlewsrestformat=json&wsfunction=${wsfunction}&${parametro}=${valorParametro}`, {
         headers: {
             // 'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
             'accept-language': 'es-ES,es;q=0.9',
@@ -51,31 +51,30 @@ async function getMoodleWebServiceFunctionParams(wsfunction, parametro, valorPar
         },
     });
     if (response.data) {
-        return response.data;;
-    }
-    else return null;
+        return response.data;
+    } else return null;
 }
 
 // Funcion que envia mensaje a discord
-async function DiscordSendMessage(channelId, post){
+async function DiscordSendMessage(channelId, post) {
     const html = post.message;
     const text = convert(html, {
         wordwrap: 130
     });
-    const stringMensage = `**__${post.subject}__**\nPublicado por: ` + "`" +`${post.userfullname}` + "`" + `\n\n${text}\n═════════════════\n`;
+    const stringMensage = `**__${post.subject}__**\nPublicado por: ` + "`" + `${post.author.fullname}` + "`" + `\n\n${text}\n═════════════════\n`;
     client.guilds.fetch(ServerId).then(guild => guild.channels.cache.get(channelId).send(stringMensage));
 }
 
 // Funcion encargada de verificar si el Post recibido pertenece a los foros configurados
-async function PostHandler(response){
+async function PostHandler(response) {
     let idforoBuscado = Number(response.other.forumid);
     // Busco si esta en el listadod e foros configurado
-    for(var i = 0; i < listadoForos.length; i++) {
+    for (var i = 0; i < listadoForos.length; i++) {
         if (listadoForos[i].idForo === idforoBuscado) {
             // Realizo la consulta para acceder a los datos faltantes para enviar el mensaje
             const ListadoPost = await getMoodleWebServiceFunctionParams(getPost, "discussionid", response.other.discussionid);
             ListadoPost.posts.forEach(post => {
-                if (post.id === response.objectid){
+                if (post.id === response.objectid) {
                     DiscordSendMessage(listadoForos[i].idCanalDiscord, post);
                 }
             });
@@ -85,14 +84,14 @@ async function PostHandler(response){
 }
 
 // Funcion encargada de verificar si la discusion recibida pertenece a los foros configurados
-async function DiscussionHandler(response){
+async function DiscussionHandler(response) {
     let idforoBuscado = Number(response.other.forumid);
-    for(var i = 0; i < listadoForos.length; i++) {
+    for (var i = 0; i < listadoForos.length; i++) {
         if (listadoForos[i].idForo === idforoBuscado) {
             // Realizo la consulta para acceder a los datos faltantes para enviar el mensaje
             const ListadoPost = await getMoodleWebServiceFunctionParams(getPost, "discussionid", response.objectid);
             ListadoPost.posts.forEach(post => {
-                if (post.discussion === response.objectid){
+                if (post.discussionid === response.objectid) {
                     DiscordSendMessage(listadoForos[i].idCanalDiscord, post);
                 }
             });
@@ -104,21 +103,21 @@ async function DiscussionHandler(response){
 // API 
 // Funcion que interpreta lo recibido por el plug-in
 app.post('/', function(req, res) {
-    res.json( { "status": "OK"} );
+    res.json({ "status": "OK" });
     switch (req.body.token) {
         case "post_created":
             // Llamo a la funcion que se encarga del manejo de post
             PostHandler(req.body);
-        break;
+            break;
         case "discussion_created":
             // Llamo a la funcion que se encarga del manejo de discusiones
             DiscussionHandler(req.body);
-        break;
+            break;
     }
 });
 
 // Iniciando el servidor
 client.login(TokenBot);
-app.listen(app.get('port'),()=>{
-    console.log(`Servidor Bot FacetSocial iniciado y escuchando en puerto: ${app.get('port')}`); 
+app.listen(app.get('port'), () => {
+    console.log(`Servidor Bot FacetSocial iniciado y escuchando en puerto: ${app.get('port')}`);
 });
