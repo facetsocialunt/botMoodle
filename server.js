@@ -116,6 +116,11 @@ app.post('/', function(req, res) {
     }
 });
 
+// HealthCheck
+app.get('/status', function (req, res) {
+    res.status(200).send("OK, Bot FacetSocial");
+})
+
 // Iniciando el servidor
 client.login(TokenBot);
 app.listen(app.get('port'), () => {
